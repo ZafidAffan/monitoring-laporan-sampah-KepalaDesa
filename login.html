@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Kepala Desa - GreenAct</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0d3b26 0%, #146c43 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 20px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.25);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            border: none;
+        }
+        .login-header {
+            background: #092e1e;
+            color: white;
+            padding: 35px 20px;
+            text-align: center;
+            border-bottom: 4px solid #ffc107; /* Aksen emas */
+        }
+        .login-header i {
+            font-size: 45px;
+            color: #ffc107;
+        }
+        .login-body {
+            padding: 30px 35px;
+        }
+        .form-control:focus {
+            border-color: #146c43;
+            box-shadow: 0 0 0 0.25rem rgba(20, 108, 67, 0.25);
+        }
+        .btn-login {
+            background: #0d3b26;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-login:hover {
+            background: #146c43;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <!-- HEADER -->
+    <div class="login-header">
+        <i class="bi bi-award-fill mb-2"></i>
+        <h4 class="fw-bold mb-0">GreenAct</h4>
+        <small class="text-white-50">Portal Masuk Kepala Desa</small>
+    </div>
+
+    <!-- FORM BODY -->
+    <div class="login-body">
+        <div id="alertBox" class="alert alert-danger d-none" role="alert"></div>
+
+        <form id="formLoginKades">
+            <!-- Email / Username -->
+            <div class="mb-3">
+                <label for="email" class="form-label text-secondary small fw-bold">Email Kelurahan/Desa</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" placeholder="kades@desa.go.id" required>
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-4">
+                <label for="password" class="form-label text-secondary small fw-bold">Kata Sandi</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <!-- Tombol Submit -->
+            <button type="submit" class="btn btn-login w-100 rounded-3 mb-3" id="btnLogin">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Masuk ke Panel
+            </button>
+            
+            <div class="text-center">
+                <small class="text-muted">Kembali ke <a href="../admin/admin_login.html" class="text-success text-decoration-none fw-medium">Login Admin</a></small>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Cek jika sudah login, langsung lempar ke dashboard kades
+    if (localStorage.getItem("kades_session")) {
+        window.location = "laporan.html";
+    }
+
+    const form = document.getElementById("formLoginKades");
+    const alertBox = document.getElementById("alertBox");
+    const btnLogin = document.getElementById("btnLogin");
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        
+        // Sembunyikan alert & set loading status
+        alertBox.classList.add("d-none");
+        btnLogin.disabled = true;
+        btnLogin.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Memvalidasi...`;
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        // Menembak endpoint login sesuai index.js kamu: /kepala-desa/login
+        fetch("https://greenact.vercel.app/kepala-desa/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || "Email atau password salah");
+            }
+            return data;
+        })
+        .then(data => {
+            // BACKEND SINKRONISASI:
+            // Simpan respons login data ke localStorage.
+            // Pastikan API backend mengembalikan objek berisi: token/user data (terutama properti .desa dan .kecamatan)
+            localStorage.setItem("kades_session", JSON.stringify(data.user || data.kades || data));
+            
+            // Redirect ke halaman dashboard kepala desa
+            window.location = "dashboard_kades.html";
+        })
+        .catch(err => {
+            console.error(err);
+            alertBox.innerText = err.message;
+            alertBox.classList.remove("d-none");
+            
+            // Reset status tombol
+            btnLogin.disabled = false;
+            btnLogin.innerHTML = `<i class="bi bi-box-arrow-in-right me-1"></i> Masuk ke Panel`;
+        });
+    });
+</script>
+
+</body>
+</html>

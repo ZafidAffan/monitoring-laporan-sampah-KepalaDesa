@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Jadwal Bersih-Bersih - GreenAct</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8f9fa; font-family: 'Segoe UI', Arial, sans-serif; }
+
+        /* Sidebar Kades - Hijau Instansi */
+        .sidebar {
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            background: #0d3b26; 
+            color: white;
+            left: 0; top: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,.1);
+        }
+        .sidebar .logo {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+        .sidebar .logo i { font-size: 45px; color: #ffc107; }
+        .menu { margin-top: 20px; }
+        .menu a {
+            display: block;
+            color: rgba(255,255,255,.8);
+            text-decoration: none;
+            padding: 15px 25px;
+            transition: .3s;
+        }
+        .menu a:hover, .menu a.active {
+            background: rgba(255,255,255,.1);
+            color: white;
+            border-left: 4px solid #ffc107;
+        }
+        .menu i { margin-right: 12px; }
+
+        /* Main Content */
+        .main { margin-left: 260px; min-height: 100vh; }
+        .topbar {
+            background: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        }
+        .content { padding: 30px; }
+        .card-table {
+            border: none;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,.05);
+            padding: 25px;
+        }
+        .welcome-badge {
+            background: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .btn-xs { padding: 2px 6px; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR KEPALA DESA -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="bi bi-award-fill"></i>
+            <h5 class="mt-2 mb-0 fw-bold">Panel Kepala Desa</h5>
+            <small class="text-warning text-uppercase" id="lblNamaDesa">Desa ...</small>
+        </div>
+        <div class="menu">
+            <a href="dashboard_kades.html"><i class="bi bi-inbox-fill"></i> Laporan Masuk</a>
+            <a href="#" class="active"><i class="bi bi-calendar-check-fill"></i> Lihat Jadwal Rilis</a>
+            <a href="#" id="logoutKades"><i class="bi bi-box-arrow-right"></i> Keluar</a>
+        </div>
+    </div>
+
+    <!-- MAIN PANELS -->
+    <div class="main">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div>
+                <h4 class="fw-bold text-dark mb-0">Agenda Bersih-Bersih Desa</h4>
+                <small id="txtTanggal" class="text-muted"></small>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="welcome-badge me-2" id="lblKecamatan">Kecamatan ...</span>
+                <i class="bi bi-person-bounding-box text-success fs-4 me-2"></i>
+                <strong id="txtNamaKades">Kepala Desa</strong>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- Alert Peringatan Jika Desa Kosong / Undefined -->
+            <div id="alertConfig" class="alert alert-warning d-none" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Perhatian:</strong> Sesi wilayah desa tidak terdeteksi atau kosong di localStorage. Periksa tab Console (F12) untuk melihat data login Anda.
+            </div>
+
+            <div class="card-table">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-bold text-secondary">Monitoring Jadwal Gotong Royong</h5>
+                    <button class="btn btn-sm btn-outline-success" onclick="fetchJadwalAktif()">
+                        <i class="bi bi-arrow-clockwise"></i> Segarkan Jadwal
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-success">
+                            <tr>
+                                <th width="5%">No</th>
+                                <th width="15%">Info / Status</th>
+                                <th width="20%">Waktu Pelaksanaan</th>
+                                <th width="30%">Lokasi / Alamat Sasaran</th>
+                                <th width="15%">Peta Lokasi</th>
+                                <th width="15%">Instruksi / Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelJadwalKades">
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <div class="spinner-border text-success spinner-border-sm me-2" role="status"></div>
+                                    Memuat agenda jadwal desa...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // 1. Ambil & Debugging Data Sesi Kades dari localStorage
+    const kadesSession = JSON.parse(localStorage.getItem("kades_session"));
+    console.log("=== DEBUGGING FRONTEND GREENACT ===");
+    console.log("1. Objek Kades di LocalStorage:", kadesSession);
+
+    if (!kadesSession) {
+        alert("Sesi Anda telah berakhir atau belum login. Mengalihkan ke halaman login...");
+        window.location = "kepala_desa_login.html";
+    }
+
+    // Mengakomodasi variasi penamaan kolom database login Anda (desa/nama_desa/kelurahan)
+    const namaDesaKades = kadesSession.desa || kadesSession.nama_desa || kadesSession.kelurahan || ""; 
+    const namaKecamatanKades = kadesSession.kecamatan || kadesSession.nama_kecamatan || "";
+
+    console.log("2. Properti Desa yang ditangkap:", namaDesaKades);
+    console.log("3. Properti Kecamatan yang ditangkap:", namaKecamatanKades);
+
+    // Validasi Visual jika Data Wilayah Tidak Terbaca dari Sesi Login
+    if (!namaDesaKades) {
+        document.getElementById("alertConfig").classList.remove("d-none");
+    }
+
+    // Render info profile wilayah ke DOM HTML
+    document.getElementById("txtNamaKades").innerText = kadesSession.name || kadesSession.nama || "Kepala Desa";
+    document.getElementById("lblNamaDesa").innerText = "Desa " + (namaDesaKades || "...");
+    document.getElementById("lblKecamatan").innerText = "Kec. " + (namaKecamatanKades || "...");
+    document.getElementById("txtTanggal").innerText = new Date().toLocaleDateString('id-ID', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // 2. Tarik Data Jadwal Aktif Sesuai Wilayah Kerja Kades
+    function fetchJadwalAktif() {
+        const tbody = document.getElementById("tabelJadwalKades");
+        
+        if (!namaDesaKades || namaDesaKades === "") {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger py-4">
+                        <i class="bi bi-shield-slash-fill d-block fs-3 mb-1"></i>
+                        Gagal memuat jadwal: Nama wilayah desa tidak ditemukan pada token sesi login Anda.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        const targetUrl = `https://greenact.vercel.app/kepala-desa/jadwal/${encodeURIComponent(namaDesaKades.trim())}`;
+        console.log("4. Menembak Endpoint URL Backend:", targetUrl);
+
+        fetch(targetUrl)
+        .then(res => {
+            console.log("5. Status Respon Server HTTP:", res.status);
+            if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            console.log("6. Data JSON Diterima:", data);
+            tbody.innerHTML = "";
+
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x fs-2 text-secondary d-block mb-2"></i>
+                            Belum ada jadwal bersih-bersih yang diagendakan untuk wilayah desa ini.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            data.forEach((jadwal, index) => {
+                // Konversi tanggal MySQL ke format lokal Indonesia
+                const tglKegiatan = jadwal.tanggal 
+                    ? new Date(jadwal.tanggal).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+                    : '-';
+                
+                const lat = jadwal.latitude;
+                const lng = jadwal.longitude;
+                
+                let tombolMaps = `<span class="text-muted small">Tanpa GPS</span>`;
+                if (lat && lng && lat !== "NULL" && lng !== "NULL") {
+                    tombolMaps = `
+                        <div class="mb-1"><code class="text-dark" style="font-size: 11px;">${lat}, ${lng}</code></div>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" 
+                           target="_blank" 
+                           class="btn btn-xs btn-outline-danger py-0 px-2 rounded">
+                            <i class="bi bi-geo-alt-fill"></i> Buka Rute
+                        </a>
+                    `;
+                }
+
+                // Pemetaan warna komponen badge berdasarkan status kegiatan
+                let badgeStatus = '';
+                const currentStatus = (jadwal.status || '').toLowerCase().trim();
+                
+                if(currentStatus === 'dijadwalkan') {
+                    badgeStatus = `<span class="badge bg-primary text-uppercase" style="font-size: 10px;">Dijadwalkan</span>`;
+                } else if(currentStatus === 'dalam perjalanan' || currentStatus === 'on progress') {
+                    badgeStatus = `<span class="badge bg-warning text-dark text-uppercase" style="font-size: 10px;">On Progress</span>`;
+                } else if(currentStatus === 'selesai') {
+                    badgeStatus = `<span class="badge bg-success text-uppercase" style="font-size: 10px;">Selesai</span>`;
+                } else {
+                    badgeStatus = `<span class="badge bg-secondary text-uppercase" style="font-size: 10px;">${jadwal.status || 'Asing'}</span>`;
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>
+                        <span class="badge bg-dark text-wrap mb-2">#REP-${jadwal.report_id || '0'}</span><br>
+                        ${badgeStatus}
+                    </td>
+                    <td>
+                        <div class="fw-bold text-success mb-1"><i class="bi bi-calendar-event"></i> ${tglKegiatan}</div>
+                        <small class="text-muted"><i class="bi bi-clock"></i> Pukul ${jadwal.waktu ? jadwal.waktu.substring(0,5) : '--:--'} WIB</small>
+                    </td>
+                    <td>
+                        <div class="fw-medium text-dark mb-1" style="font-size: 14px;">${jadwal.lokasi || '-'}</div>
+                    </td>
+                    <td>${tombolMaps}</td>
+                    <td>
+                        <small class="text-muted text-wrap d-block" style="max-width: 250px;">
+                            ${jadwal.deskripsi || 'Tidak ada catatan instruksi tambahan.'}
+                        </small>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => {
+            console.error("CRITICAL FETCH ERROR:", err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger py-4">
+                        <i class="bi bi-exclamation-triangle-fill d-block fs-3 mb-1"></i> 
+                        Gagal menyinkronkan daftar jadwal dari server. <br>
+                        <small class="text-muted">Error detail: ${err.message}. Periksa koneksi backend atau konfigurasi database Anda.</small>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // Jalankan penarikan data secara otomatis saat halaman terbuka pertama kali
+    fetchJadwalAktif();
+
+    // 3. Sistem Operasional Log Out Sesi Kades
+    document.getElementById("logoutKades").addEventListener("click", function(e) {
+        e.preventDefault();
+        if (confirm("Apakah Anda ingin keluar dari Panel Kepala Desa?")) {
+            localStorage.removeItem("kades_session");
+            window.location = "kepala_desa_login.html";
+        }
+    });
+</script>
+</body>
+</html>

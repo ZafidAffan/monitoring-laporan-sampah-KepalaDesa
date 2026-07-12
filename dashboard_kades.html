@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Kepala Desa - GreenAct</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8f9fa; font-family: 'Segoe UI', Arial, sans-serif; }
+
+        /* Sidebar Kades - Hijau Instansi */
+        .sidebar {
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            background: #0d3b26; 
+            color: white;
+            left: 0; top: 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,.1);
+        }
+        .sidebar .logo {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+        .sidebar .logo i { font-size: 45px; color: #ffc107; }
+        .menu { margin-top: 20px; }
+        .menu a {
+            display: block;
+            color: rgba(255,255,255,.8);
+            text-decoration: none;
+            padding: 15px 25px;
+            transition: .3s;
+        }
+        .menu a:hover, .menu a.active {
+            background: rgba(255,255,255,.1);
+            color: white;
+            border-left: 4px solid #ffc107;
+        }
+        .menu i { margin-right: 12px; }
+
+        /* Main Content */
+        .main { margin-left: 260px; min-height: 100vh; }
+        .topbar {
+            background: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        }
+        .content { padding: 30px; }
+        .card-table {
+            border: none;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,.05);
+            padding: 25px;
+        }
+        .table img {
+            width: 80px; height: 60px;
+            object-fit: cover; border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .welcome-badge {
+            background: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .btn-xs { padding: 2px 6px; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR KEPALA DESA -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="bi bi-award-fill"></i>
+            <h5 class="mt-2 mb-0 fw-bold">Panel Kepala Desa</h5>
+            <small class="text-warning text-uppercase" id="lblNamaDesa">Desa ...</small>
+        </div>
+        <div class="menu">
+            <a href="#" class="active"><i class="bi bi-inbox-fill"></i> Laporan Masuk</a>
+            <a href="jadwal_kades.html"><i class="bi bi-calendar-check"></i> Lihat Jadwal Rilis</a>
+            <a href="#" id="logoutKades"><i class="bi bi-box-arrow-right"></i> Keluar</a>
+        </div>
+    </div>
+
+    <!-- MAIN PANELS -->
+    <div class="main">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div>
+                <h4 class="fw-bold text-dark mb-0">Disposisi Laporan TPS Liar</h4>
+                <small id="txtTanggal" class="text-muted"></small>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="welcome-badge me-2" id="lblKecamatan">Kecamatan ...</span>
+                <i class="bi bi-person-bounding-box text-success fs-4 me-2"></i>
+                <strong id="txtNamaKades">Kepala Desa</strong>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <div class="card-table">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-bold text-secondary">Aduan Sampah di Wilayah Anda</h5>
+                    <button class="btn btn-sm btn-outline-success" onclick="loadLaporanDesa()">
+                        <i class="bi bi-arrow-clockwise"></i> Segarkan Data
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="5%">No</th>
+                                <th width="12%">Foto</th>
+                                <th width="15%">Pelapor / Tanggal</th>
+                                <th width="33%">Deskripsi Lokasi</th>
+                                <th width="15%">Koordinat (Lat, Lng)</th>
+                                <th width="10%">Status</th>
+                                <th width="10%" class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelLaporanKades">
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <div class="spinner-border text-success spinner-border-sm me-2" role="status"></div>
+                                    Memuat aduan wilayah desa...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUAT JADWAL JUMAT BERSIH -->
+    <div class="modal fade" id="modalJadwal" tabindex="-1" aria-labelledby="modalJadwalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-3">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold" id="modalJadwalLabel"><i class="bi bi-calendar-plus-fill me-2"></i>Agendakan Bersih-Bersih</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formBuatJadwal">
+                    <div class="modal-body">
+                        <!-- Hidden Report ID -->
+                        <input type="hidden" id="mdlReportId">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Tanggal Pelaksanaan</label>
+                                <input type="date" id="mdlTanggal" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Waktu / Jam</label>
+                                <input type="time" id="mdlWaktu" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Lokasi Sasaran TPS</label>
+                            <input type="text" id="mdlLokasi" class="form-control" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Catatan / Deskripsi Instruksi</label>
+                            <textarea id="mdlDeskripsi" class="form-control" rows="3" placeholder="Instruksi untuk petugas lapangan/warga..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Latitude</label>
+                                <input type="text" id="mdlLat" class="form-control form-control-sm" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Longitude</label>
+                                <input type="text" id="mdlLng" class="form-control form-control-sm" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" id="btnSimpanJadwal" class="btn btn-success btn-sm rounded-pill px-4">
+                            <i class="bi bi-save"></i> Rilis Jadwal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // 1. Validasi Sesi Login Kades
+    const kadesSession = JSON.parse(localStorage.getItem("kades_session"));
+    if (!kadesSession) {
+        window.location = "kepala_desa_login.html";
+    }
+
+    const namaDesaKades = kadesSession.desa || kadesSession.kelurahan; 
+    const namaKecamatanKades = kadesSession.kecamatan;
+
+    // Render info profile wilayah
+    document.getElementById("txtNamaKades").innerText = kadesSession.name || "Kepala Desa";
+    document.getElementById("lblNamaDesa").innerText = "Desa " + (namaDesaKades || "...");
+    document.getElementById("lblKecamatan").innerText = "Kec. " + (namaKecamatanKades || "...");
+    document.getElementById("txtTanggal").innerText = new Date().toLocaleDateString('id-ID', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let listLaporanLokal = []; 
+    const modalJadwalBS = new bootstrap.Modal(document.getElementById('modalJadwal'));
+
+    // 2. Fetch data aduan desa
+    function loadLaporanDesa() {
+        if(!namaDesaKades) return;
+
+        fetch(`https://greenact.vercel.app/kepala-desa/laporan-siaps-jadwal/${encodeURIComponent(namaDesaKades)}`)
+        .then(res => {
+            if (!res.ok) throw new Error("Gagal mengambil data dari server");
+            return res.json();
+        })
+        .then(data => {
+            listLaporanLokal = data; 
+            const tbody = document.getElementById("tabelLaporanKades");
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-patch-check fs-2 text-success d-block mb-2"></i>
+                            Bersih! Tidak ada penumpukan sampah baru yang dilaporkan di wilayah desa Anda.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            data.forEach((item, index) => {
+                // SINKRONISASI FOTO: Diubah ke item.img_url agar cocok dengan kolom database
+                let fotoMentah = item.img_url || '';
+                let srcGambar = 'https://via.placeholder.com/80x60?text=No+Image';
+                
+                if (fotoMentah) {
+                    fotoMentah = fotoMentah.trim();
+                    if (fotoMentah.startsWith('http://') || fotoMentah.startsWith('https://')) {
+                        srcGambar = fotoMentah;
+                    } else {
+                        srcGambar = 'https://' + fotoMentah.replace(/^\/+|^\:+/, '');
+                    }
+                }
+
+                // Format Tanggal (Sesuai kolom created_at)
+                const tanggalFormat = item.created_at 
+                    ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : '-';
+                
+                // Urusan Koordinat GPS (Sesuai kolom latitude dan longitude)
+                const lat = item.latitude || null;
+                const lng = item.longitude || null;
+                
+                let kolomKoordinat = `<span class="text-muted small">Tidak ada data GPS</span>`;
+                if (lat && lng) {
+                    kolomKoordinat = `
+                        <div class="mb-1"><code class="text-dark" style="font-size: 11px;">${lat}, ${lng}</code></div>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" 
+                           target="_blank" 
+                           class="btn btn-xs btn-outline-danger py-0 px-2 rounded">
+                            <i class="bi bi-geo-alt-fill"></i> Buka Maps
+                        </a>
+                    `;
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>
+                        <img src="${srcGambar}" alt="Foto TPS" onerror="this.onerror=null; this.src='https://via.placeholder.com/80x60?text=Broken+Link';">
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark" style="font-size: 14px;">${item.name || 'Warga GreenAct'}</span><br>
+                        <small class="text-muted"><i class="bi bi-calendar3"></i> ${tanggalFormat}</small>
+                    </td>
+                    <td>
+                        <div class="fw-medium text-dark mb-1" style="font-size: 14px;">${item.address || '-'}</div>
+                        <small class="text-muted text-break d-block" style="max-width: 320px;">
+                            ${item.description || 'Tidak ada deskripsi tambahan.'}
+                        </small>
+                    </td>
+                    <td>${kolomKoordinat}</td>
+                    <td>
+                        <span class="badge bg-warning text-dark text-uppercase" style="font-size: 10px; padding: 5px 8px;">
+                            ${item.status || 'pending'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-success px-3 rounded-pill" onclick="bukaModalJadwal(${item.report_id})">
+                            <i class="bi bi-calendar-plus"></i> Atur Jadwal
+                        </button>
+                    </td>
+                `; // Penutupan tag </tr> aman & valid
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("tabelLaporanKades").innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-danger py-4">
+                        <i class="bi bi-wifi-off d-block fs-3 mb-1"></i> Gagal sinkronisasi data dengan server.
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // 3. Auto-fill modal data laporan (Sesuai kolom report_id)
+    function bukaModalJadwal(idLaporan) {
+        const laporanTerpilih = listLaporanLokal.find(x => x.report_id === idLaporan);
+        if (!laporanTerpilih) return alert("Data laporan tidak ditemukan");
+
+        document.getElementById("mdlReportId").value = laporanTerpilih.report_id;
+        document.getElementById("mdlLokasi").value = laporanTerpilih.address || `Wilayah Desa ${namaDesaKades}`;
+        document.getElementById("mdlLat").value = laporanTerpilih.latitude || "";
+        document.getElementById("mdlLng").value = laporanTerpilih.longitude || "";
+        document.getElementById("mdlDeskripsi").value = `Penanganan tindak lanjut atas aduan dari warga.`;
+        
+        modalJadwalBS.show();
+    }
+
+    // 4. Submit payload ke backend
+    document.getElementById("formBuatJadwal").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const btn = document.getElementById("btnSimpanJadwal");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...`;
+
+        const payload = {
+            report_id: parseInt(document.getElementById("mdlReportId").value),
+            tanggal: document.getElementById("mdlTanggal").value,
+            waktu: document.getElementById("mdlWaktu").value,
+            lokasi: document.getElementById("mdlLokasi").value,
+            deskripsi: document.getElementById("mdlDeskripsi").value,
+            latitude: document.getElementById("mdlLat").value || null,
+            longitude: document.getElementById("mdlLng").value || null
+        };
+
+        fetch("https://greenact.vercel.app/buat-jadwal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            const resData = await res.json();
+            if(!res.ok) throw new Error(resData.error || "Gagal menyimpan jadwal");
+            return resData;
+        })
+        .then(data => {
+            alert("Sukses! " + data.message);
+            modalJadwalBS.hide();
+            document.getElementById("formBuatJadwal").reset();
+            loadLaporanDesa(); 
+        })
+        .catch(err => {
+            alert("Kesalahan: " + err.message);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-save"></i> Rilis Jadwal`;
+        });
+    });
+
+    // Inisialisasi awal saat halaman dibuka
+    loadLaporanDesa();
+
+    // 5. Fitur Sesi Logout
+    document.getElementById("logoutKades").addEventListener("click", function(e) {
+        e.preventDefault();
+        if (confirm("Apakah Anda ingin keluar dari Panel Kepala Desa?")) {
+            localStorage.removeItem("kades_session");
+            window.location = "kepala_desa_login.html";
+        }
+    });
+</script>
+</body>
+</html>
