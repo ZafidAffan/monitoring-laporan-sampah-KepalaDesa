@@ -360,7 +360,7 @@
             longitude: document.getElementById("mdlLng").value || null
         };
 
-        fetch("https://greenact.vercel.app/buat-jadwal", {
+        fetch("https://greenact.vercel.app/kepala-desa/buat-jadwal", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
